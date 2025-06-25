@@ -1,0 +1,273 @@
+---
+title: 'Roblox Integration Guide'
+description: 'Complete guide to integrating UpView with your Roblox games'
+---
+
+## Roblox Integration Overview
+
+UpView provides a lightweight, easy-to-use module that integrates seamlessly with your Roblox games. This guide covers everything you need to know about setting up and customizing the integration.
+
+## Basic Integration
+
+### Step 1: Install the Module
+
+The UpView module is available in the Roblox Toolbox:
+
+1. Open Roblox Studio
+2. Go to **View** → **Toolbox**
+3. Search for "UpView" or use the module ID: `73920509284272`
+4. Insert the module into your game
+
+### Step 2: Basic Setup
+
+Add this code to a Script in ServerScriptService:
+
+```lua
+local UpView = require(73920509284272)
+
+UpView.init({
+    apiKey = "upv_xxxx_xxxx_xxxx_xxxx", -- Your API key from the dashboard
+    gameId = game.GameId
+})
+```
+
+<Note>
+  Replace the API key with your actual key from the UpView dashboard (Settings → API Key).
+</Note>
+
+### Step 3: Enable HTTP Requests
+
+HTTP requests must be enabled for UpView to work:
+
+1. In Roblox Studio, go to **Game Settings**
+2. Under **Security**, check **Allow HTTP Requests**
+3. Save your game
+
+## Advanced Configuration
+
+### Custom Configuration Options
+
+The `UpView.init()` function accepts additional configuration options:
+
+```lua
+UpView.init({
+    apiKey = "upv_xxxx_xxxx_xxxx_xxxx",
+    gameId = game.GameId,
+    debug = false, -- Enable debug logging
+    maxRetries = 3, -- Number of retry attempts for failed requests
+    timeout = 10 -- Request timeout in seconds
+})
+```
+
+### Environment-Specific Setup
+
+You can configure different settings for different environments:
+
+```lua
+local isStudio = game:GetService("RunService"):IsStudio()
+local isProduction = not isStudio
+
+UpView.init({
+    apiKey = "upv_xxxx_xxxx_xxxx_xxxx",
+    gameId = game.GameId,
+    debug = isStudio, -- Only enable debug in Studio
+    -- Add environment-specific settings here
+})
+```
+
+## Custom Feedback Forms
+
+### Creating Custom UI
+
+UpView allows you to create custom feedback forms that match your game's style:
+
+```lua
+-- Example: Custom feedback form
+local function createFeedbackForm()
+    local screenGui = Instance.new("ScreenGui")
+    local frame = Instance.new("Frame")
+    local textBox = Instance.new("TextBox")
+    local submitButton = Instance.new("TextButton")
+    
+    -- Set up your UI here...
+    
+    submitButton.MouseButton1Click:Connect(function()
+        local feedback = textBox.Text
+        if feedback ~= "" then
+            UpView.submitFeedback({
+                text = feedback,
+                playerId = player.UserId,
+                playerName = player.Name
+            })
+            screenGui:Destroy()
+        end
+    end)
+end
+```
+
+### Using the Built-in Form
+
+UpView also provides a built-in feedback form:
+
+```lua
+-- Show the built-in feedback form
+UpView.showFeedbackForm(player)
+
+-- Or with custom options
+UpView.showFeedbackForm(player, {
+    title = "Report a Bug",
+    placeholder = "Describe the issue...",
+    submitText = "Submit Report"
+})
+```
+
+## API Functions Reference
+
+### Core Functions
+
+<AccordionGroup>
+  <Accordion title="UpView.init(config)">
+    Initializes the UpView module with your configuration.
+    
+    **Parameters:**
+    - `config.apiKey` (string): Your UpView API key
+    - `config.gameId` (number): Your Roblox game ID
+    - `config.debug` (boolean, optional): Enable debug logging
+    - `config.maxRetries` (number, optional): Retry attempts for failed requests
+    - `config.timeout` (number, optional): Request timeout in seconds
+  </Accordion>
+  
+  <Accordion title="UpView.submitFeedback(data)">
+    Submits feedback to UpView.
+    
+    **Parameters:**
+    - `data.text` (string): The feedback text
+    - `data.playerId` (number): Roblox player ID
+    - `data.playerName` (string): Player display name
+    - `data.category` (string, optional): Feedback category
+    - `data.priority` (string, optional): Priority level (low, medium, high)
+  </Accordion>
+  
+  <Accordion title="UpView.showFeedbackForm(player, options)">
+    Shows the built-in feedback form to a player.
+    
+    **Parameters:**
+    - `player` (Player): The Roblox player
+    - `options` (table, optional): Custom form options
+  </Accordion>
+</AccordionGroup>
+
+## Error Handling
+
+### Handling API Errors
+
+The UpView module includes built-in error handling:
+
+```lua
+-- Example: Handle submission errors
+local success, error = UpView.submitFeedback({
+    text = "This is a test feedback",
+    playerId = player.UserId,
+    playerName = player.Name
+})
+
+if not success then
+    warn("Failed to submit feedback:", error)
+    -- Handle the error appropriately
+end
+```
+
+### Common Error Scenarios
+
+<CardGroup cols={2}>
+  <Card title="Invalid API Key" icon="alert-triangle">
+    Check that your API key is correct and active in your dashboard
+  </Card>
+  <Card title="HTTP Requests Disabled" icon="wifi-off">
+    Ensure HTTP requests are enabled in Game Settings
+  </Card>
+  <Card title="Rate Limit Exceeded" icon="clock">
+    You've exceeded the rate limit. Check your usage in the dashboard
+  </Card>
+  <Card title="Network Issues" icon="wifi">
+    Check your internet connection and try again
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+### Performance Optimization
+
+1. **Batch Submissions**: If submitting multiple feedback items, consider batching them
+2. **Error Handling**: Always handle potential errors gracefully
+3. **Rate Limiting**: Be mindful of the rate limits (60 requests per minute per API key)
+
+### User Experience
+
+1. **Clear Instructions**: Provide clear instructions to players about how to submit feedback
+2. **Confirmation**: Give players confirmation when their feedback is submitted
+3. **Accessibility**: Ensure your feedback forms are accessible to all players
+
+### Security
+
+1. **API Key Protection**: Never expose your API key in client-side scripts
+2. **Input Validation**: Validate player input before submission
+3. **Rate Limiting**: Implement client-side rate limiting to prevent spam
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+  <Accordion title="Feedback not appearing in dashboard">
+    - Check that your API key is correct
+    - Verify HTTP requests are enabled
+    - Check the Roblox output for error messages
+    - Ensure your game is published and running
+  </Accordion>
+  
+  <Accordion title="Module not found">
+    - Verify the module ID is correct: `73920509284272`
+    - Make sure the module is inserted into your game
+    - Check that you're requiring the module correctly
+  </Accordion>
+  
+  <Accordion title="Rate limit errors">
+    - Check your current usage in the dashboard
+    - Implement client-side rate limiting
+    - Consider upgrading your plan if needed
+  </Accordion>
+</AccordionGroup>
+
+### Debug Mode
+
+Enable debug mode to get detailed logging:
+
+```lua
+UpView.init({
+    apiKey = "upv_xxxx_xxxx_xxxx_xxxx",
+    gameId = game.GameId,
+    debug = true -- Enable debug logging
+})
+```
+
+This will output detailed information to the Roblox console, helping you troubleshoot issues.
+
+## Next Steps
+
+Now that you have UpView integrated, explore these additional features:
+
+<CardGroup cols={2}>
+  <Card title="Custom Forms" icon="edit" href="/guides/custom-forms">
+    Learn how to create custom feedback forms
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Explore the full API documentation
+  </Card>
+  <Card title="Dashboard Guide" icon="layout-dashboard" href="/guides/dashboard">
+    Master your UpView dashboard
+  </Card>
+  <Card title="Best Practices" icon="star" href="/guides/best-practices">
+    Learn best practices for feedback collection
+  </Card>
+</CardGroup> 

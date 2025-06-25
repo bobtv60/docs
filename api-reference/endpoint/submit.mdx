@@ -1,0 +1,219 @@
+---
+title: 'Submit Feedback'
+description: 'Submit player feedback and bug reports via API'
+---
+
+## Submit Feedback
+
+Submit player feedback and bug reports to UpView via the API.
+
+**Endpoint:** `POST /feedback`
+
+**Authentication:** Required (API Key)
+
+### Request
+
+#### Headers
+
+```http
+Content-Type: application/json
+x-api-key: upv_xxxx_xxxx_xxxx_xxxx
+```
+
+#### Body
+
+```json
+{
+  "gameId": "123456789",
+  "playerId": "987654321",
+  "playerName": "PlayerName",
+  "text": "This is the feedback text from the player"
+}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `gameId` | string | Yes | The Roblox game ID |
+| `playerId` | string | Yes | The Roblox player ID |
+| `playerName` | string | Yes | The player's display name |
+| `text` | string | Yes | The feedback text (max 1000 characters) |
+
+### Response
+
+#### Success Response (200)
+
+```json
+{
+  "success": true,
+  "remaining": 59,
+  "reset": 1640995200,
+  "category": "Bug"
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Always `true` for successful submissions |
+| `remaining` | number | Remaining API requests in current rate limit window |
+| `reset` | number | Unix timestamp when rate limit resets |
+| `category` | string | AI-categorized feedback type (Bug, Suggestion, Spam, Rude, Other) |
+
+### Error Responses
+
+#### Rate Limit Exceeded (429)
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "remaining": 0,
+  "reset": 1640995200
+}
+```
+
+#### Invalid API Key (401)
+
+```json
+{
+  "error": "API key not found. Please generate a new key in the dashboard."
+}
+```
+
+#### Missing Required Fields (400)
+
+```json
+{
+  "error": "Missing required field: text"
+}
+```
+
+### Example Usage
+
+#### cURL
+
+```bash
+curl -X POST https://api.upview.dev/feedback \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: upv_xxxx_xxxx_xxxx_xxxx" \
+  -d '{
+    "gameId": "123456789",
+    "playerId": "987654321",
+    "playerName": "PlayerName",
+    "text": "The game crashed when I tried to join a server"
+  }'
+```
+
+#### JavaScript (Node.js)
+
+```javascript
+const response = await fetch('https://api.upview.dev/feedback', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'upv_xxxx_xxxx_xxxx_xxxx'
+  },
+  body: JSON.stringify({
+    gameId: '123456789',
+    playerId: '987654321',
+    playerName: 'PlayerName',
+    text: 'The game crashed when I tried to join a server'
+  })
+});
+
+const result = await response.json();
+console.log(result);
+```
+
+#### Python
+
+```python
+import requests
+
+response = requests.post(
+    'https://api.upview.dev/feedback',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'upv_xxxx_xxxx_xxxx_xxxx'
+    },
+    json={
+        'gameId': '123456789',
+        'playerId': '987654321',
+        'playerName': 'PlayerName',
+        'text': 'The game crashed when I tried to join a server'
+    }
+)
+
+result = response.json()
+print(result)
+```
+
+### Rate Limiting
+
+- **60 requests per minute** per API key
+- Rate limit headers included in all responses
+- Implement exponential backoff for retry logic
+
+### Best Practices
+
+1. **Validate Input**: Ensure all required fields are present and valid
+2. **Handle Errors**: Implement proper error handling for all response codes
+3. **Rate Limiting**: Respect rate limits and implement retry logic
+4. **Security**: Keep your API key secure and never expose it in client-side code
+
+### Integration Examples
+
+#### Roblox Integration
+
+```lua
+local function submitFeedback(player, text)
+    local success, response = pcall(function()
+        return game:GetService("HttpService"):PostAsync(
+            "https://api.upview.dev/feedback",
+            game:GetService("HttpService"):JSONEncode({
+                gameId = tostring(game.GameId),
+                playerId = tostring(player.UserId),
+                playerName = player.Name,
+                text = text
+            }),
+            Enum.HttpContentType.ApplicationJson,
+            false,
+            {
+                ["x-api-key"] = "upv_xxxx_xxxx_xxxx_xxxx"
+            }
+        )
+    end)
+    
+    if success then
+        local result = game:GetService("HttpService"):JSONDecode(response)
+        if result.success then
+            print("Feedback submitted successfully")
+        else
+            warn("Failed to submit feedback:", result.error)
+        end
+    else
+        warn("Error submitting feedback:", response)
+    end
+end
+```
+
+#### Webhook Integration
+
+You can also set up webhooks to receive notifications when feedback is submitted:
+
+```json
+{
+  "type": "feedback.submitted",
+  "data": {
+    "id": "uuid",
+    "gameId": "123456789",
+    "playerId": "987654321",
+    "playerName": "PlayerName",
+    "text": "Feedback text",
+    "category": "Bug",
+    "createdAt": "2024-01-01T12:00:00Z"
+  }
+}
+``` 
